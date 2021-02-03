@@ -7,7 +7,6 @@ import 'package:better_player/src/core/better_player_utils.dart';
 import 'package:better_player/src/list/better_player_list_video_player_controller.dart';
 import 'package:flutter/material.dart';
 
-///Special version of Better Player which is used to play video in list view.
 class BetterPlayerListVideoPlayer extends StatefulWidget {
   ///Video to show
   final BetterPlayerDataSource dataSource;
@@ -26,9 +25,6 @@ class BetterPlayerListVideoPlayer extends StatefulWidget {
   ///Flag to determine if video should be auto paused
   final bool autoPause;
 
-  ///Flag to determine if video should begin anew when resumed
-  final bool resumeFromStart;
-
   final BetterPlayerListVideoPlayerController
       betterPlayerListVideoPlayerController;
 
@@ -38,7 +34,6 @@ class BetterPlayerListVideoPlayer extends StatefulWidget {
     this.playFraction = 0.6,
     this.autoPlay = true,
     this.autoPause = true,
-    this.resumeFromStart = false,
     this.betterPlayerListVideoPlayerController,
     Key key,
   })  : assert(dataSource != null, "Data source can't be null"),
@@ -108,9 +103,7 @@ class _BetterPlayerListVideoPlayerState
     } else {
       if (widget.autoPause && initialized && isPlaying && !_isDisposing) {
         _betterPlayerController.pause();
-        if (widget.resumeFromStart) {
-          _betterPlayerController.seekTo(Duration(seconds: 0));
-        }
+        _betterPlayerController.seekTo(Duration(seconds: 0));
       }
     }
   }
@@ -118,5 +111,5 @@ class _BetterPlayerListVideoPlayerState
   String _getUniqueKey() => widget.dataSource.hashCode.toString();
 
   @override
-  bool get wantKeepAlive => false;
+  bool get wantKeepAlive => true;
 }

@@ -117,5 +117,5 @@ class _BetterPlayerListVideoPlayerState
   String _getUniqueKey() => widget.dataSource.hashCode.toString();
 
   @override
-  bool get wantKeepAlive => true;
+  bool get wantKeepAlive => false;
 }

@@ -909,12 +909,14 @@ class BetterPlayerController extends ChangeNotifier {
   }
 
   ///Retry data source if playback failed.
-  Future retryDataSource({bool playFromStart}) async {
+  Future retryDataSource({bool pauseOnStart = false}) async {
     await _setupDataSource(_betterPlayerDataSource);
     if (_videoPlayerValueOnError != null) {
       final position = _videoPlayerValueOnError.position;
       await seekTo(position);
-      if (playFromStart ?? true) {
+      if (pauseOnStart && position == Duration(seconds: 0)) {
+        await pause();
+      } else {
         await play();
       }
       _videoPlayerValueOnError = null;

@@ -13,6 +13,15 @@ import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 
 import java.io.File;
 
+public class VideoCache {
+    LeastRecentlyUsedCacheEvictor evictor = new LeastRecentlyUsedCacheEvictor(maxCacheSize);
+    private static SimpleCache sDownloadCache;
+
+    public static SimpleCache getInstance(Context context) {
+        if (sDownloadCache == null) sDownloadCache = new SimpleCache(new File(context.getCacheDir(), "video"), evictor);
+        return sDownloadCache;
+    }
+}
 class CacheDataSourceFactory implements DataSource.Factory {
     private final Context context;
     private final DefaultDataSourceFactory defaultDatasourceFactory;
@@ -31,16 +40,6 @@ class CacheDataSourceFactory implements DataSource.Factory {
         DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
         defaultDatasourceFactory =
                 new DefaultDataSourceFactory(this.context, bandwidthMeter, upstreamDataSource);
-    }
-
-    public class VideoCache {
-        LeastRecentlyUsedCacheEvictor evictor = new LeastRecentlyUsedCacheEvictor(maxCacheSize);
-        private static SimpleCache sDownloadCache;
-
-        public static SimpleCache getInstance(Context context) {
-            if (sDownloadCache == null) sDownloadCache = new SimpleCache(new File(context.getCacheDir(), "video"), evictor);
-            return sDownloadCache;
-        }
     }
 
     @Override

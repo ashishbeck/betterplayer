@@ -52,7 +52,7 @@ class CacheDataSourceFactory implements DataSource.Factory {
         }
 
         return new CacheDataSource(
-                VideoCache.getInstance(createDataSource()),
+                VideoCache.getInstance(context),
                 defaultDatasourceFactory.createDataSource(),
                 new FileDataSource(),
                 new CacheDataSink(downloadCache, maxFileSize),

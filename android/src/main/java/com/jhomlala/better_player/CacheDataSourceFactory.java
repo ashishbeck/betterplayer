@@ -13,15 +13,6 @@ import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 
 import java.io.File;
 
-public class VideoCache {
-    LeastRecentlyUsedCacheEvictor evictor = new LeastRecentlyUsedCacheEvictor(maxCacheSize);
-    private static SimpleCache sDownloadCache;
-
-    public static SimpleCache getInstance(Context context) {
-        if (sDownloadCache == null) sDownloadCache = new SimpleCache(new File(context.getCacheDir(), "video"), evictor);
-        return sDownloadCache;
-    }
-}
 class CacheDataSourceFactory implements DataSource.Factory {
     private final Context context;
     private final DefaultDataSourceFactory defaultDatasourceFactory;
@@ -42,16 +33,27 @@ class CacheDataSourceFactory implements DataSource.Factory {
                 new DefaultDataSourceFactory(this.context, bandwidthMeter, upstreamDataSource);
     }
 
+
     @Override
     public DataSource createDataSource() {
-        LeastRecentlyUsedCacheEvictor evictor = new LeastRecentlyUsedCacheEvictor(maxCacheSize);
 
-        if (downloadCache == null) {
-            downloadCache = new SimpleCache(new File(context.getCacheDir(), "video"), evictor);
+        public class VideoCache {
+            LeastRecentlyUsedCacheEvictor evictor = new LeastRecentlyUsedCacheEvictor(maxCacheSize);
+            private static SimpleCache sDownloadCache;
+
+            public static SimpleCache getInstance() {
+                if (sDownloadCache == null) sDownloadCache = new SimpleCache(new File(context.getCacheDir(), "video"), evictor);
+                return sDownloadCache;
+            }
         }
+//        LeastRecentlyUsedCacheEvictor evictor = new LeastRecentlyUsedCacheEvictor(maxCacheSize);
+//
+//        if (downloadCache == null) {
+//            downloadCache = new SimpleCache(new File(context.getCacheDir(), "video"), evictor);
+//        }
 
         return new CacheDataSource(
-                VideoCache.getInstance(context),
+                VideoCache.getInstance(),
                 defaultDatasourceFactory.createDataSource(),
                 new FileDataSource(),
                 new CacheDataSink(downloadCache, maxFileSize),

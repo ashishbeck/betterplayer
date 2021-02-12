@@ -37,7 +37,7 @@ class CacheDataSourceFactory implements DataSource.Factory {
     @Override
     public DataSource createDataSource() {
 
-        public class VideoCache {
+        class VideoCache {
             LeastRecentlyUsedCacheEvictor evictor = new LeastRecentlyUsedCacheEvictor(maxCacheSize);
             private static SimpleCache sDownloadCache;
 

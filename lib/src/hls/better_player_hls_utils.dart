@@ -37,6 +37,10 @@ class BetterPlayerHlsUtils {
           },
         );
       }
+
+      if (tracks.isNotEmpty) {
+        tracks.insert(0, BetterPlayerHlsTrack.defaultTrack());
+      }
     } catch (exception) {
       BetterPlayerUtils.log("Exception on parseSubtitles: $exception");
     }
@@ -121,10 +125,15 @@ class BetterPlayerHlsUtils {
     return audios;
   }
 
-  static Future<String> getDataFromUrl(String url) async {
+  static Future<String> getDataFromUrl(String url,
+      [Map<String, String> headers]) async {
     try {
       assert(url != null, "Url can't be null!");
       final request = await _httpClient.getUrl(Uri.parse(url));
+      if (headers != null) {
+        headers.forEach((name, value) => request.headers.add(name, value));
+      }
+
       final response = await request.close();
       var data = "";
       await response.transform(const Utf8Decoder()).listen((contents) {

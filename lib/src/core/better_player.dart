@@ -3,6 +3,8 @@ import 'dart:async';
 
 // Project imports:
 import 'package:better_player/better_player.dart';
+import 'package:better_player/src/configuration/better_player_controller_event.dart';
+import 'package:better_player/src/core/better_player_utils.dart';
 import 'package:better_player/src/core/better_player_with_controls.dart';
 
 // Flutter imports:
@@ -68,13 +70,13 @@ class _BetterPlayerState extends State<BetterPlayer>
   ///Flag which determines if widget has initialized
   bool _initialized = false;
 
+  ///Subscription for controller events
+  StreamSubscription _controllerEventSubscription;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    Future.delayed(Duration.zero, () {
-      _setup();
-    });
   }
 
   @override
@@ -84,22 +86,32 @@ class _BetterPlayerState extends State<BetterPlayer>
       setState(() {
         _navigatorState = navigator;
       });
+      _setup();
       _initialized = true;
     }
     super.didChangeDependencies();
   }
 
   Future<void> _setup() async {
-    widget.controller.addListener(onFullScreenChanged);
+    _controllerEventSubscription =
+        widget.controller.controllerEventStream.listen(onControllerEvent);
+
+    //Default locale
     var locale = const Locale("en", "US");
-    if (mounted) {
-      final contextLocale = Localizations.localeOf(context);
-      if (contextLocale != null) {
-        locale = contextLocale;
+    try{
+      if (mounted) {
+        final contextLocale = Localizations.localeOf(context);
+        if (contextLocale != null) {
+          locale = contextLocale;
+        }
       }
+    }catch (exception){
+      BetterPlayerUtils.log(exception.toString());
     }
     widget.controller.setupTranslations(locale);
   }
+
+
 
   @override
   void dispose() {
@@ -116,22 +128,36 @@ class _BetterPlayerState extends State<BetterPlayer>
     }
 
     WidgetsBinding.instance.removeObserver(this);
-    widget.controller.removeListener(onFullScreenChanged);
-
-    ///Controller from list widget must be dismissed manually
-    if (widget.controller.betterPlayerPlaylistConfiguration == null) {
-      widget.controller.dispose();
-    }
-
+    _controllerEventSubscription?.cancel();
+    widget.controller.dispose();
     super.dispose();
   }
 
   @override
   void didUpdateWidget(BetterPlayer oldWidget) {
     if (oldWidget.controller != widget.controller) {
-      widget.controller.addListener(onFullScreenChanged);
+      _controllerEventSubscription?.cancel();
+      _controllerEventSubscription =
+          widget.controller.controllerEventStream.listen(onControllerEvent);
     }
     super.didUpdateWidget(oldWidget);
+  }
+
+  void onControllerEvent(BetterPlayerControllerEvent event) {
+    switch (event) {
+      case BetterPlayerControllerEvent.openFullscreen:
+        onFullScreenChanged();
+        break;
+      case BetterPlayerControllerEvent.hideFullscreen:
+        onFullScreenChanged();
+        break;
+      case BetterPlayerControllerEvent.changeSubtitles:
+        setState(() {});
+        break;
+      case BetterPlayerControllerEvent.setupDataSource:
+        setState(() {});
+        break;
+    }
   }
 
   // ignore: avoid_void_async

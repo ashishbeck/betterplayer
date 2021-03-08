@@ -74,6 +74,8 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
           'imageUrl': dataSource.imageUrl,
           'notificationChannelName': dataSource.notificationChannelName,
           'overriddenDuration': dataSource.overriddenDuration?.inMilliseconds,
+          'licenseUrl': dataSource.licenseUrl,
+          'drmHeaders': dataSource.drmHeaders,
         };
         break;
       case DataSourceType.file:
@@ -92,14 +94,14 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
         };
         break;
     }
-
-    return _channel.invokeMethod<void>(
+    await _channel.invokeMethod<void>(
       'setDataSource',
       <String, dynamic>{
         'textureId': textureId,
         'dataSource': dataSourceDescription,
       },
     );
+    return;
   }
 
   @override
@@ -241,6 +243,17 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
         'textureId': textureId,
         'name': name,
         'index': index,
+      },
+    );
+  }
+
+  @override
+  Future<void> setMixWithOthers(int textureId, bool mixWithOthers) {
+    return _channel.invokeMethod<void>(
+      'setMixWithOthers',
+      <String, dynamic>{
+        'textureId': textureId,
+        'mixWithOthers': mixWithOthers,
       },
     );
   }

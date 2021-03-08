@@ -64,6 +64,9 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
     private static final String OVERRIDDEN_DURATION_PARAMETER = "overriddenDuration";
     private static final String NAME_PARAMETER = "name";
     private static final String INDEX_PARAMETER = "index";
+    private static final String LICENSE_URL_PARAMETER = "licenseUrl";
+    private static final String DRM_HEADERS_PARAMETER = "drmHeaders";
+    private static final String MIX_WITH_OTHERS_PARAMETER = "mixWithOthers";
 
     private static final String INIT_METHOD = "init";
     private static final String CREATE_METHOD = "create";
@@ -81,6 +84,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
     private static final String ENABLE_PICTURE_IN_PICTURE_METHOD = "enablePictureInPicture";
     private static final String DISABLE_PICTURE_IN_PICTURE_METHOD = "disablePictureInPicture";
     private static final String IS_PICTURE_IN_PICTURE_SUPPORTED_METHOD = "isPictureInPictureSupported";
+    private static final String SET_MIX_WITH_OTHERS_METHOD = "setMixWithOthers";
     private static final String DISPOSE_METHOD = "dispose";
 
     private final LongSparseArray<BetterPlayer> videoPlayers = new LongSparseArray<>();
@@ -139,6 +143,7 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
         if (flutterState == null) {
             Log.wtf(TAG, "Detached from the engine before registering to it.");
         }
+        disposeAllPlayers();
         BetterPlayerCache.releaseCache();
         flutterState.stopListening();
         flutterState = null;
@@ -268,7 +273,9 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                 player.setAudioTrack(call.argument(NAME_PARAMETER), call.argument(INDEX_PARAMETER));
                 result.success(null);
                 break;
-
+            case SET_MIX_WITH_OTHERS_METHOD:
+                player.setMixWithOthers(call.argument(MIX_WITH_OTHERS_PARAMETER));
+                break;
             case DISPOSE_METHOD:
                 dispose(player, textureId);
                 result.success(null);
@@ -309,7 +316,9 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                     false,
                     0L,
                     0L,
-                    overriddenDuration.longValue()
+                    overriddenDuration.longValue(),
+                    null,
+                    null
             );
         } else {
             boolean useCache = getParameter(dataSource, USE_CACHE_PARAMETER, false);
@@ -319,6 +328,8 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
             long maxCacheFileSize = maxCacheFileSizeNumber.longValue();
             String uri = getParameter(dataSource, URI_PARAMETER, "");
             String formatHint = getParameter(dataSource, FORMAT_HINT_PARAMETER, null);
+            String licenseUrl = getParameter(dataSource, LICENSE_URL_PARAMETER, null);
+            Map<String, String> drmHeaders = getParameter(dataSource, DRM_HEADERS_PARAMETER, new HashMap<>());
             player.setDataSource(
                     flutterState.applicationContext,
                     key,
@@ -329,7 +340,9 @@ public class BetterPlayerPlugin implements FlutterPlugin, ActivityAware, MethodC
                     useCache,
                     maxCacheSize,
                     maxCacheFileSize,
-                    overriddenDuration.longValue()
+                    overriddenDuration.longValue(),
+                    licenseUrl,
+                    drmHeaders
             );
         }
     }

@@ -188,7 +188,7 @@ class _BetterPlayerCupertinoControlsState
                     )
                   : Row(
                       children: <Widget>[
-                        if (_controlsConfiguration.enablePlayPause)
+                        if (_controlsConfiguration.enableSkips)
                           _buildSkipBack(iconColor, barHeight)
                         else
                           const SizedBox(),
@@ -196,7 +196,7 @@ class _BetterPlayerCupertinoControlsState
                           _buildPlayPause(_controller, iconColor, barHeight)
                         else
                           const SizedBox(),
-                        if (_controlsConfiguration.enablePlayPause)
+                        if (_controlsConfiguration.enableSkips)
                           _buildSkipForward(iconColor, barHeight)
                         else
                           const SizedBox(),
@@ -519,7 +519,8 @@ class _BetterPlayerCupertinoControlsState
     return StreamBuilder<int>(
       stream: _betterPlayerController.nextVideoTimeStreamController.stream,
       builder: (context, snapshot) {
-        if (snapshot.data != null) {
+        final time = snapshot.data;
+        if (time != null && time > 0) {
           return InkWell(
             onTap: () {
               _betterPlayerController.playNextVideo();
@@ -535,7 +536,7 @@ class _BetterPlayerCupertinoControlsState
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
-                    "${_betterPlayerController.translations.controlsNextVideoIn} ${snapshot.data} ...",
+                    "${_betterPlayerController.translations.controlsNextVideoIn} $time ...",
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),

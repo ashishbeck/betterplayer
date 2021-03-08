@@ -12,21 +12,22 @@ class BetterPlayerTranslations {
   final String overflowMenuSubtitles;
   final String overflowMenuQuality;
   final String overflowMenuAudioTracks;
+  final String qualityAuto;
 
-  BetterPlayerTranslations({
-    this.languageCode = "en",
-    this.generalDefaultError = "Video can't be played",
-    this.generalNone = "None",
-    this.generalDefault = "Default",
-    this.generalRetry = "Retry",
-    this.playlistLoadingNextVideo = "Loading next video",
-    this.controlsLive = "LIVE",
-    this.controlsNextVideoIn = "Next video in",
-    this.overflowMenuPlaybackSpeed = "Playback speed",
-    this.overflowMenuSubtitles = "Subtitles",
-    this.overflowMenuQuality = "Quality",
-    this.overflowMenuAudioTracks = "Audio",
-  });
+  BetterPlayerTranslations(
+      {this.languageCode = "en",
+      this.generalDefaultError = "Video can't be played",
+      this.generalNone = "None",
+      this.generalDefault = "Default",
+      this.generalRetry = "Retry",
+      this.playlistLoadingNextVideo = "Loading next video",
+      this.controlsLive = "LIVE",
+      this.controlsNextVideoIn = "Next video in",
+      this.overflowMenuPlaybackSpeed = "Playback speed",
+      this.overflowMenuSubtitles = "Subtitles",
+      this.overflowMenuQuality = "Quality",
+      this.overflowMenuAudioTracks = "Audio",
+      this.qualityAuto = "Auto"});
 
   factory BetterPlayerTranslations.polish() => BetterPlayerTranslations(
         languageCode: "pl",
@@ -40,6 +41,7 @@ class BetterPlayerTranslations {
         overflowMenuSubtitles: "Napisy",
         overflowMenuQuality: "Jakość",
         overflowMenuAudioTracks: "Dźwięk",
+        qualityAuto: "Automatycznie",
       );
 
   factory BetterPlayerTranslations.chinese() => BetterPlayerTranslations(
@@ -55,6 +57,7 @@ class BetterPlayerTranslations {
         overflowMenuSubtitles: "字幕",
         overflowMenuQuality: "质量",
         overflowMenuAudioTracks: "音訊",
+        qualityAuto: "汽車",
       );
 
   factory BetterPlayerTranslations.hindi() => BetterPlayerTranslations(
@@ -70,5 +73,22 @@ class BetterPlayerTranslations {
         overflowMenuSubtitles: "उपशीर्षक",
         overflowMenuQuality: "गुणवत्ता",
         overflowMenuAudioTracks: "ऑडियो",
+        qualityAuto: "ऑटो",
+      );
+
+  factory BetterPlayerTranslations.arabic() => BetterPlayerTranslations(
+        languageCode: "ar",
+        generalDefaultError: "لا يمكن تشغيل الفيديو",
+        generalNone: "لا يوجد",
+        generalDefault: "الاساسي",
+        generalRetry: "اعادة المحاوله",
+        playlistLoadingNextVideo: "تحميل الفيديو التالي",
+        controlsLive: "مباشر",
+        controlsNextVideoIn: "الفيديو التالي في",
+        overflowMenuPlaybackSpeed: "سرعة التشغيل",
+        overflowMenuSubtitles: "الترجمة",
+        overflowMenuQuality: "الجودة",
+        overflowMenuAudioTracks: "الصوت",
+        qualityAuto: "ऑटो",
       );
 }

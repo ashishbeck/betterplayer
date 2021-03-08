@@ -1,3 +1,65 @@
+## 0.0.62
+* Refactored internal event handling.
+
+## 0.0.61
+* Fixed fullscreenByDefault issue.
+* Updated documentation.
+
+## 0.0.60
+* Updated documentation.
+* Added null checking for videoPlayerController inside BetterPlayerController.
+* Added setMixWithOthers method to BetterPlayerController.
+* Added initialStartIndex in BetterPlayerPlaylistConfiguration.
+* Fixed issue where player did not disposed properly on app quit.
+* Added placeholder parameter in BetterPlayerDataSource.
+* Fixed custom material full screen icons (by https://github.com/FelipeFernandesLeandro)
+
+## 0.0.59
+* Fixed WEBVTT subtitles parsing.
+* Updated ExoPlayer version.
+* Refactored ExoPlayer code.
+* Added missing controller dispose from BetterPlayer widget dispose.
+* Added fix for iOS aspect ratio issue.
+* Fixed auto play issue where player starts video after load initialization process and player is not visible.
+* Updated texts in examples.
+* Added missing widevine DRM parameters (by https://github.com/FlutterSu).
+
+## 0.0.58
+* Added overflowModalColor and overflowModalTextColor in BetterPlayerControlsConfiguration.
+* Disabled picture in picture in fullscreen mode.
+* Fixed enabled parameter for skip back and forward.
+* Fixed notification configuration null issue (by https://github.com/bounty1342)
+* Added token based and widevine DRM support.
+* Updated documentation.
+
+## 0.0.57
+* Fixed iOS HLS initialization issue.
+* Fixed issue where video plays after resume even if it's not visible.
+* Updated User-Agent picking for Android.
+* Added auto option for quality selection.
+
+## 0.0.56
+* Fixed empty data source notification issue.
+* Fixed WebVTT subtitles parsing issue.
+* Fixed memory data source issue on iOS.
+* Added videoExtension parameter for memory data source (works only with memory data source).
+* Added videoFormat parameter to network data source.
+* Fixed controls visible all time on live stream.
+* Fixed potential iOS notification crash.
+
+## 0.0.55
+* Dart analysis fix
+
+## 0.0.54
+* Refactored BetterPlayerPlaylist feature.
+* Added new BetterPlayerPlaylistController which is accessible from BetterPlayerPlaylist's current
+state. Playlist video can be changed with setupDataSource method and current video index can be
+accessed with currentDataSourceIndex getter.
+* Fixed iOS availableDuration index issue.
+* Added arabic translations (by https://github.com/mohamed-Etman).
+* Added headers to HLS data request (by https://github.com/mohamed-Etman).
+* Added fullScreenAspectRatio to copyWith method in BetterPlayerConfiguration (by https://github.com/njlawton)
+
 ## 0.0.53
 * Fixed fullscreen issue.
 * Fixed HLS tracks selection.
@@ -5,7 +67,7 @@
 * Removed unused player observer in iOS.
 * Fixed cache issue in Android where multiple Better Player instances uses same directory.
 * Fixed HLS parsing issue.
-* Added HLS Audio examoke,
+* Added HLS Audio example.
 
 ## 0.0.52
 * Fixed unregister listener issue in iOS.

@@ -325,22 +325,27 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     String imageUrl,
     String notificationChannelName,
     Duration overriddenDuration,
+    String licenseUrl,
+    Map<String, String> drmHeaders,
   }) {
     return _setDataSource(
       DataSource(
-          sourceType: DataSourceType.network,
-          uri: dataSource,
-          formatHint: formatHint,
-          headers: headers,
-          useCache: useCache,
-          maxCacheSize: maxCacheSize,
-          maxCacheFileSize: maxCacheFileSize,
-          showNotification: showNotification,
-          title: title,
-          author: author,
-          imageUrl: imageUrl,
-          notificationChannelName: notificationChannelName,
-          overriddenDuration: overriddenDuration),
+        sourceType: DataSourceType.network,
+        uri: dataSource,
+        formatHint: formatHint,
+        headers: headers,
+        useCache: useCache,
+        maxCacheSize: maxCacheSize,
+        maxCacheFileSize: maxCacheFileSize,
+        showNotification: showNotification,
+        title: title,
+        author: author,
+        imageUrl: imageUrl,
+        notificationChannelName: notificationChannelName,
+        overriddenDuration: overriddenDuration,
+        licenseUrl: licenseUrl,
+        drmHeaders: drmHeaders,
+      ),
     );
   }
 
@@ -570,6 +575,10 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   void setAudioTrack(String name, int index) {
     _videoPlayerPlatform.setAudioTrack(_textureId, name, index);
+  }
+
+  void setMixWithOthers(bool mixWithOthers) {
+    _videoPlayerPlatform.setMixWithOthers(_textureId, mixWithOthers);
   }
 }
 

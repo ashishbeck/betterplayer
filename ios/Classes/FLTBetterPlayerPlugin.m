@@ -73,6 +73,7 @@ static void* statusContext = &statusContext;
 static void* playbackLikelyToKeepUpContext = &playbackLikelyToKeepUpContext;
 static void* playbackBufferEmptyContext = &playbackBufferEmptyContext;
 static void* playbackBufferFullContext = &playbackBufferFullContext;
+static void* presentationSizeContext = &presentationSizeContext;
 
 
 #if TARGET_OS_IOS
@@ -109,6 +110,7 @@ AVPictureInPictureController *_pipController;
         [_player addObserver:self forKeyPath:@"rate" options:0 context:nil];
         [item addObserver:self forKeyPath:@"loadedTimeRanges" options:0 context:timeRangeContext];
         [item addObserver:self forKeyPath:@"status" options:0 context:statusContext];
+        [item addObserver:self forKeyPath:@"presentationSize" options:0 context:presentationSizeContext];
         [item addObserver:self
                forKeyPath:@"playbackLikelyToKeepUp"
                   options:0
@@ -165,6 +167,7 @@ AVPictureInPictureController *_pipController;
     if (self._observersAdded){
         [_player removeObserver:self forKeyPath:@"rate" context:nil];
         [[_player currentItem] removeObserver:self forKeyPath:@"status" context:statusContext];
+        [[_player currentItem] removeObserver:self forKeyPath:@"presentationSize" context:presentationSizeContext];
         [[_player currentItem] removeObserver:self
                                    forKeyPath:@"loadedTimeRanges"
                                       context:timeRangeContext];
@@ -370,11 +373,16 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 - (NSTimeInterval) availableDuration
 {
     NSArray *loadedTimeRanges = [[_player currentItem] loadedTimeRanges];
-    CMTimeRange timeRange = [[loadedTimeRanges objectAtIndex:0] CMTimeRangeValue];
-    Float64 startSeconds = CMTimeGetSeconds(timeRange.start);
-    Float64 durationSeconds = CMTimeGetSeconds(timeRange.duration);
-    NSTimeInterval result = startSeconds + durationSeconds;
-    return result;
+    if (loadedTimeRanges.count > 0){
+        CMTimeRange timeRange = [[loadedTimeRanges objectAtIndex:0] CMTimeRangeValue];
+        Float64 startSeconds = CMTimeGetSeconds(timeRange.start);
+        Float64 durationSeconds = CMTimeGetSeconds(timeRange.duration);
+        NSTimeInterval result = startSeconds + durationSeconds;
+        return result;
+    } else {
+        return 0;
+    }
+    
 }
 
 - (void)observeValueForKeyPath:(NSString*)path
@@ -409,7 +417,12 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
             }
             _eventSink(@{@"event" : @"bufferingUpdate", @"values" : values, @"key" : _key});
         }
-    } else if (context == statusContext) {
+    }
+    else if (context == presentationSizeContext){
+        [self onReadyToPlay];
+    }
+    
+    else if (context == statusContext) {
         AVPlayerItem* item = (AVPlayerItem*)object;
         switch (item.status) {
             case AVPlayerItemStatusFailed:
@@ -471,7 +484,6 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 }
 
 - (void)onReadyToPlay {
-    NSLog(@"OnReadyToPlay");
     if (_eventSink && !_isInitialized && _key) {
         if (!_player.currentItem) {
             return;
@@ -494,16 +506,22 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
             return;
         }
         
+        //Fix from https://github.com/flutter/flutter/issues/66413
+        AVPlayerItemTrack *track = [self.player currentItem].tracks.firstObject;
+        CGSize naturalSize = track.assetTrack.naturalSize;
+        CGAffineTransform prefTrans = track.assetTrack.preferredTransform;
+        CGSize realSize = CGSizeApplyAffineTransform(naturalSize, prefTrans);
+        
         _isInitialized = true;
         [self addVideoOutput];
         [self updatePlayingState];
         _eventSink(@{
             @"event" : @"initialized",
             @"duration" : @([self duration]),
-            @"width" : @(width),
-            @"height" : @(height),
+            @"width" : @(fabs(realSize.width) ? : width),
+            @"height" : @(fabs(realSize.height) ? : height),
             @"key" : _key
-                   });
+        });
     }
 }
 
@@ -594,7 +612,13 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 
 - (void)setTrackParameters:(int) width: (int) height: (int)bitrate {
     _player.currentItem.preferredPeakBitRate = bitrate;
-    _player.currentItem.preferredMaximumResolution = CGSizeMake(width, height);
+    if (@available(iOS 11.0, *)) {
+        if (width == 0 && height == 0){
+            _player.currentItem.preferredMaximumResolution = CGSizeZero;
+        } else {
+            _player.currentItem.preferredMaximumResolution = CGSizeMake(width, height);
+        }
+    }
 }
 
 - (void)setPictureInPicture:(BOOL)pictureInPicture
@@ -625,7 +649,6 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 
 - (void)setupPipController {
     if (@available(iOS 9.0, *)) {
-        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
         [[AVAudioSession sharedInstance] setActive: YES error: nil];
         [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
         if (!_pipController && self._playerLayer && [AVPictureInPictureController isPictureInPictureSupported]) {
@@ -721,6 +744,17 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
         }
         
     }
+    
+}
+
+- (void)setMixWithOthers:(bool)mixWithOthers {
+  if (mixWithOthers) {
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback
+                                     withOptions:AVAudioSessionCategoryOptionMixWithOthers
+                                           error:nil];
+  } else {
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+  }
 }
 
 
@@ -876,6 +910,7 @@ NSMutableDictionary*  _artworkImageDict;
                                          eventChannelWithName:[NSString stringWithFormat:@"better_player_channel/videoEvents%lld",
                                                                textureId]
                                          binaryMessenger:_messenger];
+    [player setMixWithOthers:false];
     [eventChannel setStreamHandler:player];
     player.eventChannel = eventChannel;
     _players[@(textureId)] = player;
@@ -903,7 +938,6 @@ NSMutableDictionary*  _artworkImageDict;
 }
 
 - (void) setRemoteCommandsNotificationActive{
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     [[AVAudioSession sharedInstance] setActive:true error:nil];
     [[UIApplication sharedApplication] beginReceivingRemoteControlEvents];
 }
@@ -977,33 +1011,41 @@ NSMutableDictionary*  _artworkImageDict;
         NSString* key =  [self getTextureId:player];
         MPMediaItemArtwork* artworkImage = [_artworkImageDict objectForKey:key];
         
-        if (artworkImage){
-            [nowPlayingInfoDict setObject:artworkImage forKey:MPMediaItemPropertyArtwork];
-            [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nowPlayingInfoDict;
-            
-        } else {
-            dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-            dispatch_async(queue, ^{
-                UIImage * tempArtworkImage = nil;
-                if ([imageUrl rangeOfString:@"http"].location == NSNotFound){
-                    tempArtworkImage = [UIImage imageWithContentsOfFile:imageUrl];
-                } else {
-                    NSURL *nsImageUrl =[NSURL URLWithString:imageUrl];
-                    tempArtworkImage = [UIImage imageWithData:[NSData dataWithContentsOfURL:nsImageUrl]];
-                }
-                if(tempArtworkImage)
-                {
-                    MPMediaItemArtwork* artworkImage = [[MPMediaItemArtwork alloc] initWithImage: tempArtworkImage];
-                    [_artworkImageDict setObject:artworkImage forKey:key];
-                    [nowPlayingInfoDict setObject:artworkImage forKey:MPMediaItemPropertyArtwork];
-                }
+        if (key != [NSNull null]){
+            if (artworkImage){
+                [nowPlayingInfoDict setObject:artworkImage forKey:MPMediaItemPropertyArtwork];
                 [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nowPlayingInfoDict;
-            });
+                
+            } else {
+                dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+                dispatch_async(queue, ^{
+                    @try{
+                        UIImage * tempArtworkImage = nil;
+                        if ([imageUrl rangeOfString:@"http"].location == NSNotFound){
+                            tempArtworkImage = [UIImage imageWithContentsOfFile:imageUrl];
+                        } else {
+                            NSURL *nsImageUrl =[NSURL URLWithString:imageUrl];
+                            tempArtworkImage = [UIImage imageWithData:[NSData dataWithContentsOfURL:nsImageUrl]];
+                        }
+                        if(tempArtworkImage)
+                        {
+                            MPMediaItemArtwork* artworkImage = [[MPMediaItemArtwork alloc] initWithImage: tempArtworkImage];
+                            [_artworkImageDict setObject:artworkImage forKey:key];
+                            [nowPlayingInfoDict setObject:artworkImage forKey:MPMediaItemPropertyArtwork];
+                        }
+                        [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nowPlayingInfoDict;
+                    }
+                    @catch(NSException *exception) {
+                        
+                    }
+                });
+            }
         }
     } else {
         [MPNowPlayingInfoCenter defaultCenter].nowPlayingInfo = nowPlayingInfoDict;
     }
 }
+
 
 
 - (NSString*) getTextureId: (FLTBetterPlayer*) player{
@@ -1055,7 +1097,6 @@ NSMutableDictionary*  _artworkImageDict;
     
     if ([@"init" isEqualToString:call.method]) {
         // Allow audio playback when the Ring/Silent switch is set to silent
-        [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
         for (NSNumber* textureId in _players) {
             [_registry unregisterTexture:[textureId unsignedIntegerValue]];
             [_players[textureId] dispose];
@@ -1157,9 +1198,9 @@ NSMutableDictionary*  _artworkImageDict;
         } else if ([@"setSpeed" isEqualToString:call.method]) {
             [player setSpeed:[[argsMap objectForKey:@"speed"] doubleValue] result:result];
         }else if ([@"setTrackParameters" isEqualToString:call.method]) {
-            int width = argsMap[@"width"];
-            int height = argsMap[@"height"];
-            int bitrate = argsMap[@"bitrate"];
+            int width = [argsMap[@"width"] intValue];
+            int height = [argsMap[@"height"] intValue];
+            int bitrate = [argsMap[@"bitrate"] intValue];
             
             [player setTrackParameters:width: height : bitrate];
             result(nil);
@@ -1185,6 +1226,8 @@ NSMutableDictionary*  _artworkImageDict;
             NSString* name = argsMap[@"name"];
             int index = [argsMap[@"index"] intValue];
             [player setAudioTrack:name index: index];
+        } else if ([@"setMixWithOthers" isEqualToString:call.method]){
+            [player setMixWithOthers:[argsMap[@"mixWithOthers"] boolValue]];
         }
         
         else {

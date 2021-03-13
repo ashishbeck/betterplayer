@@ -1006,12 +1006,16 @@ class BetterPlayerController {
   }
 
   ///Retry data source if playback failed.
-  Future retryDataSource() async {
+  Future retryDataSource({bool pauseOnStart = false}) async {
     await _setupDataSource(_betterPlayerDataSource!);
     if (_videoPlayerValueOnError != null) {
       final position = _videoPlayerValueOnError!.position;
       await seekTo(position);
-      await play();
+      if (pauseOnStart && position == const Duration(seconds: 0)) { //
+        await pause();
+      } else {
+        await play();
+      }
       _videoPlayerValueOnError = null;
     }
   }
